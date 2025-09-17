@@ -211,6 +211,7 @@
             height: 320px;
             border: 2px dashed color-mix(in srgb, var(--text) 14%, transparent);
             border-radius: var(--radius);
+            overflow: hidden;
         }
         form { display: grid; gap: .8rem }
         label { font-weight: 600 }
@@ -377,8 +378,8 @@
         </section>
 
         <section class="container" aria-labelledby="map-title">
-            <h2 id="map-title">Risk Map (Demo)</h2>
-            <div id="map" class="map" role="region" aria-label="Flood Risk Map of India"></div>
+            <h2 id="map-title">World Flood Risk Map (Demo)</h2>
+            <div id="map" class="map" role="region" aria-label="World Flood Risk Map with Overlays"></div>
         </section>
 
         <section id="signup" class="container" aria-labelledby="sign-title">
@@ -515,7 +516,7 @@
         </div>
     </footer>
 
-    <div class="toast" id="toast" role="status" aria-live="polite">✅ Subscribed! You will now receive flood alerts.</div>
+    <!-- <div class="toast" id="toast" role="status" aria-live="polite">✅ Subscribed! You will now receive flood alerts.</div> -->
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
@@ -580,21 +581,32 @@
             document.querySelectorAll('.btn').forEach(b => b.style.transition = 'none');
         }
 
-        // Initialize Leaflet map
-        const map = L.map('map').setView([22.9734, 78.6569], 5); // Center of India
+        // Initialize Leaflet world map with overlays and panning restriction
+        const map = L.map('map').setView([0, 0], 2); // Center on world, zoom for full view
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors',
+            noWrap: true,
+            minZoom: 2
         }).addTo(map);
 
-        // Example alert markers
-        const alerts = [
+        // Define maxBounds to cover the world with a slight padding, encompassing all markers
+        const southWest = L.latLng(-85, -180),
+              northEast = L.latLng(85, 180),
+              maxBounds = L.latLngBounds(southWest, northEast);
+        map.setMaxBounds(maxBounds);
+        map.options.maxBoundsViscosity = 1.0; // Ensures the map resists panning outside bounds
+
+        // Add overlays (markers for flood risk areas)
+        const floodMarkers = [
             { name: "Mumbai", coords: [19.0760, 72.8777], msg: "High tide at 15:10" },
             { name: "Pune", coords: [18.5204, 73.8567], msg: "Light rainfall expected" },
-            { name: "Kolhapur", coords: [16.7050, 74.2433], msg: "River rising — avoid low-lying areas" }
-            // {name: "Assam", coords: [26.2006, 92.9376],msg: "High water level risk of flood" }
+            { name: "Kolhapur", coords: [16.7050, 74.2433], msg: "River rising — avoid low-lying areas" },
+            // { name: "New Orleans", coords: [29.9511, -90.0715], msg: "Hurricane risk area" },
+            { name: "Bangladesh", coords: [23.6850, 90.3563], msg: "Monsoon flood prone" },
+            { name: "Assam", coords: [26.2006, 92.9376], msg: "High flood prone" },
         ];
 
-        alerts.forEach(a => {
+        floodMarkers.forEach(a => {
             L.marker(a.coords).addTo(map)
                 .bindPopup(`<b>${a.name}</b><br>${a.msg}`);
         });
